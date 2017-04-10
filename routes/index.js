@@ -35,11 +35,14 @@ router.post('/link', function(req, res, next) {
   // If origin doesnt exist in hosts throw an error
   if (!req.body.origin) throw new Error('Missing required parameter: `origin`')
   if (!req.body.destination) throw new Error('Missing required parameter: `destination`')
-  if (!req.body.description) throw new Error('Missing required parameter: `decription`')
+  if (!req.body.description) throw new Error('Missing required parameter: `description`')
   
   // We need to check origin and destination against hosts
   if (!(hosts.includes(req.body.origin))) throw new Error('Host ' + req.body.origin + ' not found');
   if (!(hosts.includes(req.body.destination))) throw new Error('Host ' + req.body.destination + ' not found');
+  
+  // Ideally we would need to ensure the link doesn't already exist
+  // and reject the link if it does 
   var link = new Link({ origin: req.body.origin, destination: req.body.destination, description: req.body.description });
   links.push(link);
   return res.json(link.asObject());
@@ -77,8 +80,8 @@ function findInGraph(origin, destination, graph) {
     var visited = [];
     var result = {};
     
-    graph[origin].forEach(function (edge) {
-        stack.push(edge); 
+    graph[origin].forEach(function (node) {
+        stack.push(node); 
     });
     
     while (stack.length) {
