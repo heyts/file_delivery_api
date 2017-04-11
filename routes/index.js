@@ -85,7 +85,7 @@ function findInGraph(origin, destination, graph) {
     });
     
     while (stack.length) {
-        var node = stack.shift();
+        var node = stack.pop();
         if (!visited.includes(node.options.destination)) {
             if (node.options.destination === destination) {
                 result[node.options.origin] = node.asObject();
