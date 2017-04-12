@@ -17,7 +17,7 @@ var hosts = [];
 
 router.post('/host', function(req, res, next) {
     // a name is currently any string of characters
-    if (!req.body.name) throw new Error('parameter `name` is required');
+    if (!req.body.name) throw new Error(`parameter 'name' is required`);
     
     // If the host to be added already exist, we send back status 409 Conflict
     if (hosts.includes(req.body.name)) return res.status(409).end();
@@ -33,13 +33,13 @@ router.get('/hosts', function(req, res, next) {
 
 router.post('/link', function(req, res, next) {
   // If origin doesnt exist in hosts throw an error
-  if (!req.body.origin) throw new Error('Missing required parameter: `origin`')
-  if (!req.body.destination) throw new Error('Missing required parameter: `destination`')
-  if (!req.body.description) throw new Error('Missing required parameter: `description`')
+  if (!req.body.origin) throw new Error(`Missing required parameter: 'origin'`);
+  if (!req.body.destination) throw new Error(`Missing required parameter: 'destination'`);
+  if (!req.body.description) throw new Error(`Missing required parameter: 'description'`);
   
   // We need to check origin and destination against hosts
-  if (!(hosts.includes(req.body.origin))) throw new Error('Host ' + req.body.origin + ' not found');
-  if (!(hosts.includes(req.body.destination))) throw new Error('Host ' + req.body.destination + ' not found');
+  if (!(hosts.includes(req.body.origin))) throw new Error(`Host #{req.body.origin} not found`);
+  if (!(hosts.includes(req.body.destination))) throw new Error(`Host #{req.body.destination} not found`);
   
   // Ideally we would need to ensure the link doesn't already exist
   // and reject the link if it does 
@@ -54,8 +54,8 @@ router.get('/links', function(req, res, next) {
 
 // If empty, returns an empty array
 router.get('/path/:origin/to/:destination', function(req, res, next) {
-    if (!hosts.includes(req.params.origin)) throw new Error('Origin Host ' +  req.params.origin + ' does not exist')
-    if (!hosts.includes(req.params.destination)) throw new Error('Destination Host ' +  req.params.destination + ' does not exist')
+    if (!hosts.includes(req.params.origin)) throw new Error(`Origin Host #{req.params.origin} does not exist`);
+    if (!hosts.includes(req.params.destination)) throw new Error(`Destination Host #{req.params.destination} does not exist`)
     
     var graph = buildGraph();
     var resp = findInGraph(req.params.origin, req.params.destination, graph);
@@ -76,33 +76,31 @@ function buildGraph() {
 
 // edge , graph, children
 function findInGraph(origin, destination, graph) {
-    var stack = [];
+    var queue = [];
     var visited = [];
-    var result = {};
+    var result = [];
+    var path = [];
     
-    graph[origin].forEach(function (node) {
-        stack.push(node); 
-    });
+    queue = queue.concat(graph[origin]); 
     
-    while (stack.length) {
-        var node = stack.pop();
-        if (!visited.includes(node.options.destination)) {
-            if (node.options.destination === destination) {
-                result[node.options.origin] = node.asObject();
-                var resultArr = [];
-                
-                for (var key in result) {
-                    resultArr.push(result[key]);
-                }
-                return resultArr;
-
-            } else {
-                if (graph[node.options.destination].length) result[node.options.origin] = node.asObject();
-                graph[node.options.destination].forEach(function (child) {
-                    stack.push(child); 
-                });
-                visited.push(node.options.destination); 
+    while (queue.length) {
+        var edge = queue.shift();
+        var path = graph[edge.options.destination].map(function (edge) {
+            return [edge];
+        });    
+        
+        if (!visited.includes(edge.options.destination)) {
+            if (edge.options.destination === destination) return result;
+            for (var adjacent in path) {
+                var new_path = [];
+                new_path.push(edge);
+                new_path.push(path[adjacent]);
+                console.log('new_path:', new_path);
+                queue.push(new_path);
+                console.log('queue:', queue);
             }
+            queue = queue.concat(graph[edge.options.destination]); 
+            visited.push(edge.options.destination); 
         }
     }
     return [];
